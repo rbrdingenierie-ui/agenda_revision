@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon agenda de révision</title>
+<style>
+  :root {
+    --navy: #1F3864;
+    --navy-soft: #4A5C82;
+    --gold: #B08D57;
+    --teal: #168F7F;
+    --teal-soft: #E3F3F1;
+    --bg: #F7F8FA;
+    --white: #FFFFFF;
+    --track: #8592B0;
+    --lightgrey: #F2F2F2;
+    --a11y-scale: 1;
+  }
+  * { box-sizing: border-box; }
+  .sr-only {
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  html, body { margin:0; padding:0; background: var(--bg); font-family: Arial, Helvetica, sans-serif; color: var(--navy); }
+  body { display:flex; justify-content:center; padding: 32px 16px 60px; }
+  .page { width:100%; max-width: 920px; }
+
+  header { text-align:center; margin-bottom: 20px; }
+  header h1 { font-size: calc(clamp(24px, 5vw, 30px) * var(--a11y-scale)); margin: 0 0 8px 0; }
+  header p { font-size: calc(15px * var(--a11y-scale)); color: var(--navy-soft); margin:0; max-width: 620px; margin-left:auto; margin-right:auto; line-height:1.5; }
+
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 3px solid var(--navy) !important;
+    outline-offset: 2px;
+  }
+
+  .skip-link {
+    position:absolute; left:-9999px; top:0; z-index:1000;
+    background:var(--navy); color:#FFFFFF; font-family:inherit; font-weight:700; font-size:14px;
+    padding:12px 20px; border-radius:0 0 10px 0; text-decoration:none;
+  }
+  .skip-link:focus { left:0; }
+
+  .back-to-hub {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:14px; font-weight:700; color:var(--navy);
+    background:#FFFFFF; border:2px solid var(--track); border-radius:999px;
+    padding:10px 18px; text-decoration:none; margin-bottom:16px; min-height:24px;
+  }
+  .back-to-hub:hover { border-color:var(--navy-soft); }
+  body.a11y-contrast .back-to-hub { border-color:#000000; color:#000000; }
+
+  /* ---------- barre d'accessibilite ---------- */
+  .a11y-bar {
+    display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
+    background:var(--white); border:2px solid var(--track); border-radius:14px;
+    padding:12px 16px; margin-bottom:20px;
+  }
+  .a11y-bar-label { font-size:13px; font-weight:800; color:var(--navy); margin-right:4px; }
+  .a11y-toggle-btn {
+    font-family:inherit; font-size:13px; font-weight:700; color:var(--navy-soft);
+    background:var(--white); border:2px solid var(--track); border-radius:999px;
+    padding:8px 14px; cursor:pointer;
+  }
+  .a11y-toggle-btn:hover { border-color:var(--navy-soft); }
+  .a11y-toggle-btn[aria-pressed="true"] { background:var(--navy); border-color:var(--navy); color:#FFFFFF; }
+  .a11y-size-group { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--navy); }
+  .a11y-size-group button {
+    font-family:inherit; font-weight:800; font-size:14px; color:var(--navy);
+    background:var(--white); border:2px solid var(--navy-soft); border-radius:8px;
+    width:34px; height:34px; cursor:pointer;
+  }
+  .a11y-size-group button:hover { border-color:var(--navy); }
+  .tts-btn {
+    font-family:inherit; font-size:13px; font-weight:700; color:var(--teal);
+    background:var(--teal-soft); border:2px solid var(--teal); border-radius:999px;
+    padding:8px 16px; cursor:pointer; display:block; margin:0 auto 20px;
+  }
+  .tts-btn:hover { background:var(--teal); color:#FFFFFF; }
+  .tts-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+  /* ---------- contraste renforce ---------- */
+  body.a11y-contrast { background:#FFFFFF; }
+  body.a11y-contrast .page { color:#000000; }
+  body.a11y-contrast header p,
+  body.a11y-contrast .section-sub,
+  body.a11y-contrast footer { color:#000000 !important; }
+  body.a11y-contrast .history-panel,
+  body.a11y-contrast .import-textarea,
+  body.a11y-contrast .btn-secondary,
+  body.a11y-contrast .btn-reset,
+  body.a11y-contrast .mini-tab-btn,
+  body.a11y-contrast .add-row input,
+  body.a11y-contrast .meta-field,
+  body.a11y-contrast .meta-field-solo { border-color:#000000 !important; }
+  body.a11y-contrast .mini-tab-btn.active { color:#FFFFFF !important; }
+  body.a11y-contrast table { border:2px solid #000000; }
+  body.a11y-contrast tbody td { border-top-color:#000000; color:#000000; }
+  body.a11y-contrast td.td-notion, body.a11y-contrast td.td-date { color:#000000 !important; }
+  body.a11y-contrast .meta-field::placeholder,
+  body.a11y-contrast .meta-field-solo::placeholder,
+  body.a11y-contrast .add-row input::placeholder { color:#3A3A3A !important; }
+
+  /* ---------- police adaptee ---------- */
+  body.a11y-font, body.a11y-font * { font-family: Verdana, Geneva, sans-serif !important; }
+
+  /* ---------- mode FALC (Facile a Lire et a Comprendre) ---------- */
+  .falc-simple-content { display:none; }
+  body.falc-mode .falc-normal-content { display:none; }
+  body.falc-mode .falc-simple-content { display:block; }
+  .falc-simple-content p, .falc-simple-content .section-sub {
+    font-size: calc(16px * var(--a11y-scale));
+    line-height: 2;
+    color:#000000;
+  }
+
+  .history-toggle {
+    display:block; width:100%; text-align:center; font-family:inherit; font-size:13.5px; font-weight:700;
+    color: var(--navy-soft); background:none; border:none; cursor:pointer; margin-bottom: 14px;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .history-toggle:hover { color: var(--navy); }
+  .history-panel {
+    background: var(--white); border: 2px solid var(--track); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 22px; display:none;
+  }
+  .history-panel.open { display:block; }
+  .history-empty { font-size:13.5px; color: var(--navy-soft); font-style:italic; text-align:center; padding: 6px; }
+  .history-item { display:flex; align-items:center; justify-content:space-between; padding: 10px 8px; border-radius:10px; cursor:pointer; }
+  .history-item:hover { background: var(--bg); }
+  .history-item + .history-item { border-top: 1px solid var(--track); }
+  .history-item .hi-main { flex:1; min-width:0; }
+  .history-item .hi-title { font-size:14px; font-weight:700; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .history-item .hi-sub { font-size:12px; color:var(--navy-soft); }
+  .history-item .hi-del { background:none; border:none; color:#647089; font-size:17px; cursor:pointer; padding:4px 8px; flex-shrink:0; min-width:24px; min-height:24px; }
+  .history-item .hi-del:hover { color:#C0392B; }
+
+  .meta-row { display:flex; margin-bottom: 20px; }
+  .meta-row .meta-field:first-child { margin-right: 12px; }
+  .meta-field {
+    flex:1; font-family: inherit; font-size: 16px; font-weight:700; color: var(--navy);
+    border: none; border-bottom: 2px solid var(--track); background: transparent;
+    padding: 10px 4px; text-align:center; min-width: 0;
+  }
+  .meta-field:focus { outline:none; border-bottom-color: var(--navy); }
+  .meta-field::placeholder { color:#6B7A9C; font-weight:400; font-style:italic; }
+
+  @media (max-width: 480px) {
+    .meta-row { flex-direction: column; }
+    .meta-row .meta-field { margin-bottom: 12px; }
+    .meta-row .meta-field:first-child { margin-right: 0; }
+  }
+
+  .meta-field-solo {
+    display:block; width:100%; font-family: inherit; font-size: 15px; font-weight:700; color: var(--navy);
+    border: none; border-bottom: 2px solid var(--track); background: transparent;
+    padding: 10px 4px; text-align:center; margin-bottom: 20px;
+  }
+  .meta-field-solo:focus { outline:none; border-bottom-color: var(--navy); }
+  .meta-field-solo::placeholder { color:#6B7A9C; font-weight:400; font-style:italic; }
+
+  .mini-tabs { display:flex; justify-content:center; gap:10px; margin-bottom: 24px; }
+  .mini-tab-btn {
+    font-family:inherit; font-size:13.5px; font-weight:700; color: var(--navy-soft);
+    background: var(--white); border:2px solid var(--track); border-radius:999px;
+    padding: 9px 18px; cursor:pointer;
+  }
+  .mini-tab-btn:hover { border-color: var(--navy-soft); }
+  .mini-tab-btn.active { background: var(--navy); border-color: var(--navy); color:#FFFFFF; }
+
+  .import-textarea {
+    width:100%; min-height:160px; font-family:inherit; font-size:14.5px; color:var(--navy);
+    border:2px solid var(--track); border-radius:14px; padding:14px 16px; resize:vertical;
+    margin-bottom:12px; line-height:1.6;
+  }
+  .import-textarea:focus { outline:none; border-color: var(--navy-soft); }
+  .import-preview { font-size:13px; color: var(--navy-soft); margin-bottom:16px; min-height:18px; }
+  .import-preview strong { color: var(--teal); }
+  .section-title { font-size: 18px; font-weight: 800; color: var(--navy); margin: 0 0 6px 0; }
+  .section-sub { font-size: 13px; color: var(--navy-soft); margin: 0 0 16px 0; }
+  .btn-secondary {
+    font-family:inherit; font-size:14px; font-weight:700; color:var(--navy-soft);
+    background:var(--white); border:2px solid var(--track); border-radius:12px; padding:12px; cursor:pointer;
+  }
+  .btn-secondary:hover { border-color: var(--navy-soft); color: var(--navy); }
+  .match-actions { display:flex; gap:12px; }
+  .match-actions > * { flex:1; }
+
+  .add-row {
+    display:flex; margin-bottom: 20px;
+  }
+  .add-row input[type="text"] {
+    flex:1; font-family:inherit; font-size:15px; color:var(--navy);
+    border:2px solid var(--track); border-radius:12px 0 0 12px; padding:12px 14px;
+    border-right:none; min-width:0;
+  }
+  .add-row input[type="text"]:focus { outline:none; border-color:var(--navy-soft); }
+  .add-row input[type="text"]::placeholder { color:#6B7A9C; }
+  .add-row input[type="date"] {
+    font-family:inherit; font-size:14px; color:var(--navy);
+    border:2px solid var(--track); border-right:none; padding:12px 10px;
+    flex-shrink:0;
+  }
+  .add-row input[type="date"]:focus { outline:none; border-color:var(--navy-soft); }
+  .add-row button {
+    font-family:inherit; font-size:15px; font-weight:700; color:#FFFFFF;
+    background: var(--navy); border:none; border-radius:0 12px 12px 0; padding:12px 20px; cursor:pointer;
+    white-space:nowrap;
+  }
+  .add-row button:hover { filter:brightness(1.15); }
+
+  @media (max-width: 560px) {
+    .add-row { flex-wrap: wrap; }
+    .add-row input[type="text"] { flex-basis:100%; border-radius:12px 12px 0 0; border-right:2px solid var(--track); border-bottom:none; margin-bottom:0; }
+    .add-row input[type="date"] { flex:1; border-radius:0; border-right:none; border-bottom:none; }
+    .add-row button { border-radius:0 0 12px 0; }
+  }
+
+  .save-indicator {
+    text-align:center; font-size:12.5px; color: #12796B; font-weight:700;
+    height: 18px; margin-bottom: 4px; opacity:0; transition: opacity 0.3s ease;
+  }
+  .save-indicator.show { opacity:1; }
+
+  .table-wrap { overflow-x: auto; margin-bottom: 20px; border-radius:14px; }
+  table { width:100%; min-width: 760px; border-collapse: collapse; background: var(--white); }
+  thead th {
+    background: var(--navy); color:#FFFFFF; font-size:12.5px; text-align:center;
+    padding: 10px 8px; white-space:nowrap;
+  }
+  thead th.th-notion { text-align:left; padding-left:14px; }
+  thead th .sub { display:block; font-weight:400; font-size:10.5px; opacity:0.75; margin-top:2px; }
+  tbody td { padding: 10px 8px; font-size: 13.5px; border-top: 1px solid var(--track); text-align:center; vertical-align:middle; }
+  tbody tr:nth-child(even) { background: var(--lightgrey); }
+  td.td-notion { text-align:left; padding-left:14px; font-weight:700; color:var(--navy); }
+  td.td-date { color:var(--navy-soft); font-size:12px; white-space:nowrap; }
+  .start-date-input {
+    font-family:inherit; font-size:12.5px; color:var(--navy-soft); border:1px solid transparent;
+    border-radius:6px; padding:4px 3px; background:transparent; width:100%; max-width:110px;
+  }
+  .start-date-input:hover { border-color: var(--track); }
+  .start-date-input:focus { outline:none; border-color:var(--navy-soft); background:var(--white); }
+  td.td-check { }
+  td.td-check input[type="checkbox"] { width:24px; height:24px; accent-color: var(--teal); cursor:pointer; }
+  td.td-del { width: 34px; }
+  .row-del-btn { background:none; border:none; color:#647089; font-size:17px; cursor:pointer; padding:4px 6px; line-height:1; min-width:24px; min-height:24px; }
+  .row-del-btn:hover { color:#C0392B; }
+
+  .empty-msg { font-size: 14px; color: var(--navy-soft); font-style: italic; padding: 24px; text-align:center; background:var(--white); border-radius:14px; margin-bottom:20px; }
+
+  .actions { display:flex; margin-bottom: 8px; }
+  .actions > * { flex:1; }
+  .actions > *:first-child { margin-right: 12px; }
+  .btn-reset {
+    font-family:inherit; font-size:14px; font-weight:700; color:var(--navy-soft);
+    background:var(--white); border:2px solid var(--track); border-radius:12px; padding:12px; cursor:pointer;
+  }
+  .btn-reset:hover { border-color:#C0392B; color:#C0392B; }
+  .btn-print {
+    font-family:inherit; font-size:14px; font-weight:700; color:var(--white);
+    background:var(--navy); border:none; border-radius:12px; padding:12px; cursor:pointer;
+  }
+  .btn-print:hover { filter:brightness(1.15); }
+
+  footer { text-align:center; font-size:12px; color:var(--navy-soft); margin-top: 20px; }
+
+  @media print {
+    .add-row, .actions, .history-toggle, .history-panel, .save-indicator, .td-del, .row-del-btn, header p, .mini-tabs, #view-import { display:none !important; }
+    thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+    table { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Aller directement au contenu</a>
+
+<div class="page">
+  <a href="https://rbrdingenierie-ui.github.io/accueil_outils/" class="back-to-hub"><span aria-hidden="true">←</span> Retour à mon espace</a>
+
+  <div class="a11y-bar" role="region" aria-label="Options d'accessibilité">
+    <span class="a11y-bar-label">♿ Accessibilité</span>
+    <button type="button" id="a11yFontBtn" class="a11y-toggle-btn" aria-pressed="false">🔤 Police adaptée</button>
+    <button type="button" id="a11yContrastBtn" class="a11y-toggle-btn" aria-pressed="false">◐ Contraste renforcé</button>
+    <button type="button" id="falcModeBtn" class="a11y-toggle-btn" aria-pressed="false" title="Facile à Lire et à Comprendre : simplifie le texte de la page">📖 Mode FALC</button>
+    <button type="button" id="hoverReadBtn" class="a11y-toggle-btn" aria-pressed="false" title="Lit à voix haute le contenu de la page quand la souris passe dessus">🔊 Lecture au survol</button>
+    <div class="a11y-size-group" role="group" aria-label="Taille du texte">
+      <span>Taille du texte</span>
+      <button type="button" id="a11ySizeDown" aria-label="Réduire la taille du texte">A−</button>
+      <button type="button" id="a11ySizeReset" aria-label="Taille du texte par défaut">A</button>
+      <button type="button" id="a11ySizeUp" aria-label="Agrandir la taille du texte">A+</button>
+    </div>
+  </div>
+
+  <main id="main" tabindex="-1">
+  <header>
+    <h1>🗓️ Mon agenda de révision</h1>
+    <div class="falc-normal-content"><p>Ajoutez une notion et choisissez sa date de 1<sup>re</sup> révision (aujourd'hui par défaut, modifiable) : le rythme J+1 / J+3 / J+7 / J+14 / J+30 se calcule automatiquement. Cochez chaque case au fur et à mesure que vous révisez.</p></div>
+    <div class="falc-simple-content"><p>Ajoutez une notion à réviser.<br>Choisissez une date pour la première révision.<br>L'outil calcule les autres dates pour vous.<br>Cochez une case quand vous avez révisé.</p></div>
+  </header>
+
+  <div class="mini-tabs" role="tablist" aria-label="Sections de l'agenda">
+    <button class="mini-tab-btn active" data-view="agenda" role="tab" aria-selected="true" aria-controls="view-agenda" id="minitab-agenda">📝 Mon agenda</button>
+    <button class="mini-tab-btn" data-view="import" role="tab" aria-selected="false" aria-controls="view-import" id="minitab-import">📥 Importer en lot</button>
+  </div>
+
+  <div class="view-panel" id="view-agenda" role="tabpanel" aria-labelledby="minitab-agenda" tabindex="0">
+  <button class="history-toggle" id="historyToggle">📚 Voir mes agendas précédents (0)</button>
+  <div class="history-panel" id="historyPanel">
+    <div class="history-empty" id="historyEmpty">Aucun agenda archivé pour l'instant.</div>
+    <div id="historyList"></div>
+  </div>
+
+  <div class="meta-row">
+    <input type="text" class="meta-field" id="matiere" placeholder="Matière" aria-label="Matière">
+    <input type="text" class="meta-field" id="chapitre" placeholder="Chapitre" aria-label="Chapitre">
+  </div>
+  <input type="text" class="meta-field-solo" id="sequenceCours" placeholder="Séquence / partie du cours" aria-label="Séquence ou partie du cours">
+
+  <div class="add-row">
+    <input type="text" id="newNotion" placeholder="Nom de la notion à réviser..." aria-label="Nom de la notion à réviser">
+    <input type="date" id="newDate" aria-label="Date de la 1re révision">
+    <button id="addBtn">+ Ajouter</button>
+  </div>
+  <div class="save-indicator" id="saveIndicator">✓ Enregistré</div>
+
+  <div id="tableHolder"></div>
+
+  <div class="actions">
+    <button class="btn-reset" id="resetBtn">Nouvel agenda</button>
+    <button class="btn-print" id="printBtn">Imprimer / PDF</button>
+  </div>
+  </div>
+
+  <div class="view-panel" id="view-import" role="tabpanel" aria-labelledby="minitab-import" tabindex="0" style="display:none;">
+    <div class="section-title">📥 Importer une liste de notions</div>
+    <div class="falc-normal-content"><div class="section-sub">Collez vos notions ci-dessous, une par ligne. Elles seront ajoutées avec la date d'aujourd'hui comme 1<sup>re</sup> révision (modifiable ensuite dans le tableau).</div></div>
+    <div class="falc-simple-content"><div class="section-sub">Écrivez vos notions ci-dessous.<br>Une notion par ligne.<br>La date d'aujourd'hui sera utilisée pour la première révision.<br>Vous pourrez changer cette date plus tard.</div></div>
+    <textarea id="importText" class="import-textarea" placeholder="Les types de mémoire&#10;La métacognition&#10;L'analogie&#10;..." aria-label="Notions à importer, une par ligne"></textarea>
+    <div class="import-preview" id="importPreview"></div>
+    <div class="match-actions">
+      <button class="btn-secondary" id="importClear">↺ Effacer</button>
+      <button class="btn-primary" id="importBtn">📥 Importer ces notions</button>
+    </div>
+  </div>
+
+  <footer>Benjamin RICHARD - Tous droits réservés</footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = 'agenda-revision-v1';
+
+  // ---- barre d'accessibilite (police adaptee, contraste renforce, mode FALC, taille du texte) ----
+  const A11Y_PREFS_KEY = 'agenda-revision-a11y-prefs-v1';
+  let a11yPrefs = { font: false, contrast: false, scale: 1, falc: false, hoverRead: false };
+  try {
+    const raw = localStorage.getItem(A11Y_PREFS_KEY);
+    if (raw) a11yPrefs = Object.assign(a11yPrefs, JSON.parse(raw));
+  } catch (e) {}
+  function saveA11yPrefs() {
+    try { localStorage.setItem(A11Y_PREFS_KEY, JSON.stringify(a11yPrefs)); } catch (e) {}
+  }
+  function applyA11yPrefs() {
+    document.body.classList.toggle('a11y-font', a11yPrefs.font);
+    document.body.classList.toggle('a11y-contrast', a11yPrefs.contrast);
+    document.body.classList.toggle('falc-mode', a11yPrefs.falc);
+    document.documentElement.style.setProperty('--a11y-scale', a11yPrefs.scale);
+    document.getElementById('a11yFontBtn').setAttribute('aria-pressed', a11yPrefs.font ? 'true' : 'false');
+    document.getElementById('a11yContrastBtn').setAttribute('aria-pressed', a11yPrefs.contrast ? 'true' : 'false');
+    document.getElementById('falcModeBtn').setAttribute('aria-pressed', a11yPrefs.falc ? 'true' : 'false');
+    document.getElementById('hoverReadBtn').setAttribute('aria-pressed', a11yPrefs.hoverRead ? 'true' : 'false');
+  }
+  document.getElementById('a11yFontBtn').addEventListener('click', () => {
+    a11yPrefs.font = !a11yPrefs.font;
+    applyA11yPrefs(); saveA11yPrefs();
+  });
+  document.getElementById('a11yContrastBtn').addEventListener('click', () => {
+    a11yPrefs.contrast = !a11yPrefs.contrast;
+    applyA11yPrefs(); saveA11yPrefs();
+  });
+  document.getElementById('falcModeBtn').addEventListener('click', () => {
+    a11yPrefs.falc = !a11yPrefs.falc;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    applyA11yPrefs(); saveA11yPrefs();
+  });
+  document.getElementById('hoverReadBtn').addEventListener('click', () => {
+    a11yPrefs.hoverRead = !a11yPrefs.hoverRead;
+    if (!a11yPrefs.hoverRead && window.speechSynthesis) window.speechSynthesis.cancel();
+    applyA11yPrefs(); saveA11yPrefs();
+  });
+  document.getElementById('a11ySizeUp').addEventListener('click', () => {
+    a11yPrefs.scale = Math.min(1.6, Math.round((a11yPrefs.scale + 0.15) * 100) / 100);
+    applyA11yPrefs(); saveA11yPrefs();
+  });
+  document.getElementById('a11ySizeDown').addEventListener('click', () => {
+    a11yPrefs.scale = Math.max(0.85, Math.round((a11yPrefs.scale - 0.15) * 100) / 100);
+    applyA11yPrefs(); saveA11yPrefs();
+  });
+  document.getElementById('a11ySizeReset').addEventListener('click', () => {
+    a11yPrefs.scale = 1;
+    applyA11yPrefs(); saveA11yPrefs();
+  });
+  applyA11yPrefs();
+
+  // ---- lecture au survol, sur l'integralite de la page ----
+  function getVisibleHoverText(el) {
+    const isFalc = document.body.classList.contains('falc-mode');
+    if (isFalc && el.closest('.falc-normal-content')) return '';
+    if (!isFalc && el.closest('.falc-simple-content')) return '';
+    if (el.matches('input, textarea, select')) {
+      return (el.getAttribute('aria-label') || el.placeholder || '').trim();
+    }
+    const clone = el.cloneNode(true);
+    clone.querySelectorAll(isFalc ? '.falc-normal-content' : '.falc-simple-content').forEach(n => n.remove());
+    clone.querySelectorAll('[aria-hidden="true"], .sr-only').forEach(n => n.remove());
+    return clone.textContent.replace(/\s+/g, ' ').trim();
+  }
+  const hoverReadSupported = 'speechSynthesis' in window;
+  function attachHoverRead(el) {
+    if (!hoverReadSupported || el.dataset.hoverReadAttached) return;
+    el.dataset.hoverReadAttached = '1';
+    el.addEventListener('mouseenter', () => {
+      if (!a11yPrefs.hoverRead) return;
+      window.speechSynthesis.cancel();
+      const text = getVisibleHoverText(el);
+      if (!text) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'fr-FR'; utter.rate = 0.95;
+      window.speechSynthesis.speak(utter);
+    });
+    el.addEventListener('mouseleave', () => { if (window.speechSynthesis) window.speechSynthesis.cancel(); });
+    el.addEventListener('focusin', () => { if (a11yPrefs.hoverRead) el.dispatchEvent(new Event('mouseenter')); });
+    el.addEventListener('focusout', () => { if (window.speechSynthesis) window.speechSynthesis.cancel(); });
+  }
+  const HOVER_READ_SELECTOR = 'h1, h2, h3, p, .back-to-hub, .mini-tab-btn, label, input, textarea, .a11y-toggle-btn, .a11y-bar-label, .btn-reset, .btn-print, .import-preview, .history-toggle, .history-empty, .empty-msg, .hi-title, .hi-sub, .hi-del';
+  function attachHoverReadAll(root) {
+    (root || document).querySelectorAll(HOVER_READ_SELECTOR).forEach(attachHoverRead);
+  }
+  attachHoverReadAll();
+
+  const HISTORY_KEY = 'agenda-revision-history-v1';
+  const OFFSETS = [1, 3, 7, 14, 30];
+  const OFFSET_LABELS = ['J+1', 'J+3', 'J+7', 'J+14', 'J+30'];
+
+  const matiereEl = document.getElementById('matiere');
+  const chapitreEl = document.getElementById('chapitre');
+  const sequenceCoursEl = document.getElementById('sequenceCours');
+  const newNotionEl = document.getElementById('newNotion');
+  const newDateEl = document.getElementById('newDate');
+  const tableHolder = document.getElementById('tableHolder');
+  const historyToggle = document.getElementById('historyToggle');
+  const historyPanel = document.getElementById('historyPanel');
+  const historyList = document.getElementById('historyList');
+  const historyEmpty = document.getElementById('historyEmpty');
+  const saveIndicator = document.getElementById('saveIndicator');
+
+  let items = []; // {text, startDate, checked:[b,b,b,b,b]}
+  let currentId = null;
+  let saveTimer = null;
+
+  function todayISO() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function addDays(iso, n) {
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0,10);
+  }
+  function formatDateFR(iso) {
+    if (!iso) return '';
+    const [y,m,d] = iso.split('-');
+    return `${d}/${m}`;
+  }
+  function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function loadHistory() {
+    try { const raw = localStorage.getItem(HISTORY_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+    return [];
+  }
+  function saveHistory(arr) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr)); } catch (e) {} }
+
+  function renderHistory() {
+    const history = loadHistory();
+    historyToggle.textContent = `📚 Voir mes agendas précédents (${history.length})`;
+    historyEmpty.style.display = history.length ? 'none' : 'block';
+    historyList.innerHTML = '';
+    history.forEach(entry => {
+      const el = document.createElement('div');
+      el.className = 'history-item';
+      const label = [entry.matiere, entry.chapitre].filter(Boolean).join(' — ') || '(sans titre)';
+      el.innerHTML = `
+        <div class="hi-main">
+          <div class="hi-title">${escapeHtml(label)}</div>
+          <div class="hi-sub">${(entry.items||[]).length} notion(s)</div>
+        </div>
+        <button class="hi-del" aria-label="Supprimer cet agenda">✕</button>`;
+      el.querySelector('.hi-main').addEventListener('click', () => {
+        matiereEl.value = entry.matiere || '';
+        chapitreEl.value = entry.chapitre || '';
+        sequenceCoursEl.value = entry.sequenceCours || '';
+        items = entry.items || [];
+        currentId = entry.id;
+        saveState();
+        historyPanel.classList.remove('open');
+      });
+      el.querySelector('.hi-del').addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (!confirm('Supprimer définitivement cet agenda de l\'historique ?')) return;
+        saveHistory(loadHistory().filter(e => e.id !== entry.id));
+        renderHistory();
+      });
+      historyList.appendChild(el);
+    });
+    attachHoverReadAll(historyList);
+  }
+  historyToggle.addEventListener('click', () => historyPanel.classList.toggle('open'));
+
+  function showSaveIndicator() {
+    saveIndicator.classList.add('show');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => saveIndicator.classList.remove('show'), 1400);
+  }
+
+  // journalise l'activite pour le systeme de badges partage (accueil_outils)
+  function logAgendaActivity(matiere, chapitre, depth) {
+    try {
+      const raw = localStorage.getItem('accueil-activity-v1');
+      const activity = raw ? JSON.parse(raw) : [];
+      activity.push({ tool: 'agenda', matiere: matiere || '', chapitre: chapitre || '', depth: depth || 0, colors: 0, createdAt: new Date().toISOString() });
+      localStorage.setItem('accueil-activity-v1', JSON.stringify(activity));
+    } catch (e) {}
+  }
+
+  function saveState() {
+    const state = { currentId, matiere: matiereEl.value, chapitre: chapitreEl.value, sequenceCours: sequenceCoursEl.value, items };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+    render();
+    showSaveIndicator();
+  }
+
+  function render() {
+    if (items.length === 0) {
+      tableHolder.innerHTML = '<div class="empty-msg">Ajoutez une notion ci-dessus pour démarrer votre agenda.</div>';
+      attachHoverReadAll(tableHolder);
+      return;
+    }
+    let html = '<div class="table-wrap"><table><caption class="sr-only">Agenda de révision : pour chaque notion, dates de révision espacée et suivi par case à cocher.</caption><thead><tr>';
+    html += '<th class="th-notion" scope="col">Notion</th><th scope="col">1<sup>re</sup> révision</th>';
+    OFFSET_LABELS.forEach(lbl => { html += `<th scope="col">${lbl}</th>`; });
+    html += '<th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>';
+
+    items.forEach((it, idx) => {
+      html += `<tr><td class="td-notion">${escapeHtml(it.text)}</td>`;
+      html += `<td class="td-date"><input type="date" class="start-date-input" data-idx="${idx}" value="${it.startDate}" aria-label="Date de 1re révision pour ${escapeHtml(it.text)}"></td>`;
+      OFFSETS.forEach((off, i) => {
+        const date = addDays(it.startDate, off);
+        const checked = it.checked[i] ? 'checked' : '';
+        const label = `${OFFSET_LABELS[i]} (${formatDateFR(date)}) pour ${it.text}`;
+        html += `<td class="td-check"><input type="checkbox" data-idx="${idx}" data-off="${i}" ${checked} aria-label="${escapeHtml(label)}"><div class="td-date">${formatDateFR(date)}</div></td>`;
+      });
+      html += `<td class="td-del"><button class="row-del-btn" data-del="${idx}" aria-label="Supprimer ${escapeHtml(it.text)}">✕</button></td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    tableHolder.innerHTML = html;
+    attachHoverReadAll(tableHolder);
+
+    tableHolder.querySelectorAll('.start-date-input').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const idx = parseInt(inp.dataset.idx, 10);
+        if (inp.value) { items[idx].startDate = inp.value; saveState(); }
+      });
+    });
+    tableHolder.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const idx = parseInt(cb.dataset.idx, 10);
+        const off = parseInt(cb.dataset.off, 10);
+        items[idx].checked[off] = cb.checked;
+        saveState();
+      });
+    });
+    tableHolder.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.del, 10);
+        items.splice(idx, 1);
+        saveState();
+      });
+    });
+  }
+
+  function addNotion() {
+    const text = newNotionEl.value.trim();
+    if (!text) { newNotionEl.focus(); return; }
+    const startDate = newDateEl.value || todayISO();
+    items.push({ text, startDate, checked: [false,false,false,false,false] });
+    newNotionEl.value = '';
+    newDateEl.value = todayISO();
+    saveState();
+    newNotionEl.focus();
+  }
+  // ---- mini-onglets Mon agenda / Importer ----
+  document.querySelectorAll('.mini-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mini-tab-btn').forEach(b => {
+        const isActive = b === btn;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+      const view = btn.dataset.view;
+      document.getElementById('view-agenda').style.display = (view === 'agenda') ? '' : 'none';
+      document.getElementById('view-import').style.display = (view === 'import') ? '' : 'none';
+    });
+  });
+
+  // ---- import en lot ----
+  const importText = document.getElementById('importText');
+  const importPreview = document.getElementById('importPreview');
+
+  function parsedImportLines() {
+    return importText.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  }
+  importText.addEventListener('input', () => {
+    const n = parsedImportLines().length;
+    importPreview.innerHTML = n > 0 ? `<strong>${n}</strong> notion${n > 1 ? 's' : ''} détectée${n > 1 ? 's' : ''}` : '';
+  });
+  document.getElementById('importClear').addEventListener('click', () => {
+    importText.value = '';
+    importPreview.textContent = '';
+  });
+  document.getElementById('importBtn').addEventListener('click', () => {
+    const lines = parsedImportLines();
+    if (lines.length === 0) { importText.focus(); return; }
+    const today = todayISO();
+    lines.forEach(text => items.push({ text, startDate: today, checked: [false,false,false,false,false] }));
+    saveState();
+    importText.value = '';
+    importPreview.textContent = '';
+    document.querySelector('.mini-tab-btn[data-view="agenda"]').click();
+  });
+
+  document.getElementById('addBtn').addEventListener('click', addNotion);
+  newNotionEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') addNotion(); });
+
+  matiereEl.addEventListener('input', saveState);
+  chapitreEl.addEventListener('input', saveState);
+  sequenceCoursEl.addEventListener('input', saveState);
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    const hasContent = items.length > 0 || matiereEl.value.trim() || chapitreEl.value.trim() || sequenceCoursEl.value.trim();
+    if (hasContent) {
+      if (!confirm('Archiver cet agenda dans l\'historique et repartir sur un nouveau ?')) return;
+      const history = loadHistory();
+      const id = currentId || ('a' + Date.now());
+      const entry = { id, matiere: matiereEl.value, chapitre: chapitreEl.value, sequenceCours: sequenceCoursEl.value, items };
+      const idx = history.findIndex(e => e.id === id);
+      if (idx >= 0) history[idx] = entry; else history.unshift(entry);
+      saveHistory(history);
+      logAgendaActivity(entry.matiere, entry.chapitre, items.length);
+      renderHistory();
+    }
+    items = [];
+    currentId = null;
+    matiereEl.value = '';
+    chapitreEl.value = '';
+    sequenceCoursEl.value = '';
+    saveState();
+  });
+
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+  // init
+  (function initState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        currentId = parsed.currentId || null;
+        matiereEl.value = parsed.matiere || '';
+        chapitreEl.value = parsed.chapitre || '';
+        sequenceCoursEl.value = parsed.sequenceCours || '';
+        items = parsed.items || [];
+      }
+    } catch (e) {}
+  })();
+  render();
+  renderHistory();
+  newDateEl.value = todayISO();
+})();
+</script>
+
+</body>
+</html>
